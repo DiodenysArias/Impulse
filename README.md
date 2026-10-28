@@ -1,64 +1,88 @@
-# :bomb: Impulse
-## Modern Denial-of-service ToolKit
+# Impulse Defensive Lab
 
+Laboratorio educativo de redes y resiliencia que funciona completamente en memoria. Permite observar cómo una cola limitada y el control de admisión afectan al trabajo completado, los descartes y el tiempo de espera, sin generar tráfico de red.
 
-<p align="center">
-  <img src="https://i.ibb.co/rFct6QX/LOGO.png">
-</p>
+Esta edición reemplaza las funcionalidades de denegación de servicio del proyecto histórico. No contiene un motor de ataques ni conserva compatibilidad con su interfaz anterior.
 
-# :computer: Main window
-<p align="center">
-  <img src="https://i.ibb.co/8c1fb1Q/Impulse-Main.png">
-</p>
+## Objetivos de aprendizaje
 
-# :satellite: Methods:
-| Method               |   Target   | Description |
-| ---------------------| -----------|-------------|
-| SMS                  | PHONE     | Sends a massive amount of SMS messages and calls to a single target |
-| EMAIL                | EMAIL     | Sends a massive amount of Email messages to a target |
-| NTP                  | IP:PORT    | NTP amplification is a type of Distributed Denial of Service (DDoS) attack in which the attacker exploits publically-accessible Network Time Protocol (NTP) servers to overwhelm the targeted with User Datagram Protocol (UDP) traffic. |
-| SYN                  | IP:PORT    | A SYN flood (half-open attack) is a type of denial-of-service (DDoS) attack which aims to make a server unavailable to legitimate traffic by consuming all available server resources. |
-| UDP                  | IP:PORT    | A UDP flood is a type of denial-of-service attack in which a large number of User Datagram Protocol (UDP) packets are sent to a targeted server with the aim of overwhelming that device’s ability to process and respond. The firewall protecting the targeted server can also become exhausted as a result of UDP flooding, resulting in a denial-of-service to legitimate traffic. |
-| POD (Ping of Death)  | IP         | Ping of Death (a.k.a. PoD) is a type of Denial of Service (DoS) attack in which an attacker attempts to crash, destabilize, or freeze the targeted computer or service by sending malformed or oversized packets using a simple ping command. |
-| ICMP                 | IP:PORT    | Ping flood, also known as ICMP flood, is a common Denial of Service (DoS) attack in which an attacker takes down a victim's computer by overwhelming it with ICMP echo requests, also known as pings. |
-| HTTP                 | URL        | HTTP Flood is a type of Distributed Denial of Service (DDoS) attack in which the attacker manipulates HTTP and POST unwanted requests in order to attack a web server or application. These attacks often use interconnected computers that have been taken over with the aid of malware such as Trojan Horses. |
-| Slowloris            | IP:PORT    | Slowloris is a denial-of-service attack program which allows an attacker to overwhelm a targeted server by opening and maintaining many simultaneous HTTP connections between the attacker and the target. |
-| Memcached            | IP:PORT    | A memcached distributed denial-of-service (DDoS) attack is a type of cyber attack in which an attacker attempts to overload a targeted victim with internet traffic. The attacker spoofs requests to a vulnerable UDP memcached* server, which then floods a targeted victim with internet traffic, potentially overwhelming the victim’s resources. While the target’s internet infrastructure is overloaded, new requests cannot be processed and regular traffic is unable to access the internet resource, resulting in denial-of-service. |
+- Comprender la relación entre demanda, capacidad de servicio y congestión.
+- Comparar una cola sin control de admisión con una política de limitación.
+- Interpretar eventos estructurados, contadores y tiempos de espera.
+- Diseñar experimentos reproducibles y explicar sus límites.
 
-# :gift: Installation:
-* Windows:
-  * Download Python 3.8 from [here](https://www.python.org/downloads/release/python-38)
-  * Launch installer, click `add python to PATH`
-  * Download Impulse
-  * Open cmd or powershell in Impulse directory
-  * Run this command: `pip install -r requirements.txt`
-  * And this: `python impulse.py --help`
+Los resultados son sintéticos. No representan una medición de ancho de banda, rendimiento TCP/IP, latencia real ni resistencia de un servicio ante ataques. El simulador no implementa protocolos de red.
 
-* Linux:
-  * `sudo apt update`
-  * `sudo apt install python3 python3-pip git -y`
-  * `git clone https://github.com/LimerBoy/Impulse`
-  * `cd Impulse/`
-  * `pip3 install -r requirements.txt`
-  * `python3 impulse.py --help`
+## Inicio rápido
 
-* Termux:
-  * `pkg update`
-  * `pkg install python3 python3-pip git -y`
-  * `git clone https://github.com/LimerBoy/Impulse`
-  * `cd Impulse/`
-  * `pip3 install -r requirements.txt`
-  * `python3 impulse.py --help`
+Requiere Python 3.11 o posterior. Desde la raíz de esta edición del proyecto:
 
-# :phone: Example SMS & Call flood:
-```python3 impulse.py --method SMS --time 20 --threads 15 --target +380123456789```
+```sh
+python -m impulse_lab
+python -m impulse_lab --scenario congestion --ticks 20 --events
+python -m impulse_lab --scenario rate-limit --ticks 20
+python -m unittest discover -s tests -v
+```
 
-<p align="center">
-  <img src="https://i.ibb.co/KmPnV9f/Impulse-SMS.png">
-</p>
+En sistemas donde el ejecutable se llama `python3`, úselo en lugar de `python`. No se necesitan paquetes de terceros, instalación con pip, permisos de administrador, controladores de captura ni conexión a Internet.
 
-# :moneybag: Donate:
-* BTC - `bc1q3m8t7shcge2smsxwm2fnwlet3j8km9q6jeqw0l`
-* LTC - `LMcv6gt2YHDFR6t4Mb8SimKL4BsRzUpzKS`
-* TRX - `TCEo2JkogrpMkQUvEDZs2UhtYi7YgYbrV3`
-* ETH - `0xbf7DaCaa1b96d3B61A92418C09910EEAe1bb3C13`
+## Escenarios
+
+| Escenario | Llegadas por tick | Control de admisión | Qué observar |
+| --- | ---: | --- | --- |
+| `baseline` | 2 | Sin límite adicional | Capacidad suficiente, sin espera |
+| `congestion` | 6 | Sin límite adicional | Acumulación y descartes al llenarse la cola |
+| `rate-limit` | 6 | Admite como máximo 3 por tick | Rechazo temprano y menor espera |
+
+Todos utilizan una cola de 12 elementos y atienden como máximo 3 elementos por tick. Se admiten llegadas antes de atender la cola. Un tick es un paso lógico, no un segundo. La ejecución termina después de 1 a 100 ticks, sin vaciar automáticamente el trabajo pendiente. El valor predeterminado es 20. No hay hilos ni bucles indefinidos.
+
+## Observabilidad
+
+La salida es JSON; `--events` añade un registro JSON por tick, seguido del resumen. Todos los registros llevan `synthetic: true`. Puede guardar la salida mediante la redirección normal de su terminal; no hay envío de telemetría.
+
+| Campo | Significado |
+| --- | --- |
+| `offered` | Trabajo sintético presentado |
+| `admitted` | Trabajo incorporado a la cola en ese tick |
+| `rate_limited` | Trabajo rechazado por control de admisión |
+| `queue_dropped` | Trabajo descartado por falta de espacio |
+| `completed` | Trabajo atendido |
+| `queue_depth` / `remaining` | Trabajo pendiente tras la atención / al finalizar |
+| `peak_queue_depth` | Máximo antes de atender, durante toda la ejecución |
+| `mean_wait_ticks` | Espera media del trabajo completado; excluye pendientes y rechazados |
+
+El resumen cumple `offered = completed + rate_limited + queue_dropped + remaining`. El control de admisión no crea capacidad nueva: cambia dónde se rechaza el exceso de trabajo. Véanse los [ejercicios](docs/labs.md).
+
+## Límites de seguridad y uso responsable
+
+- Solo simulación local en memoria: no abre sockets, resuelve DNS ni contacta servicios.
+- No acepta IP, URL, puerto, teléfono, correo, proxy, credenciales ni destinos externos.
+- No envía mensajes, paquetes ni solicitudes HTTP; no incluye amplificación, suplantación ni inundaciones.
+- No ofrece opciones para restaurar los modos antiguos ni cargar módulos de terceros.
+- Use únicamente datos sintéticos. No introduzca credenciales ni datos de personas en ejemplos o registros.
+- Las prácticas que involucren infraestructura real quedan fuera del alcance de esta edición, incluso cuando exista autorización.
+
+La autorización no convierte una red compartida en un laboratorio aislado. Los criterios para una posible ampliación local están en [arquitectura y límites](docs/architecture.md); esa ampliación no está implementada. Consulte también [SECURITY.md](SECURITY.md).
+
+## Estructura
+
+```text
+impulse_lab/
+  __init__.py        Identidad del paquete
+  __main__.py        Interfaz limitada y salida JSONL
+  model.py           Modelo de colas determinista
+tests/
+  test_lab.py        Límites, contabilidad, interfaz y ausencia de red
+docs/
+  architecture.md   Diseño y criterios para futuras prácticas
+  labs.md           Ejercicios y resultados esperados
+  migration.md      Revisión y eliminación de componentes heredados
+README.md
+SECURITY.md
+CONTRIBUTING.md
+LICENSE
+```
+
+## Procedencia y licencia
+
+Este repositorio deriva históricamente de Impulse, creado por LimerBoy. La conversión conserva el archivo LICENSE original (GNU GPL versión 3) y reconoce esa procedencia; sustituye el código ejecutable anterior por un modelo educativo nuevo. La relación de fork y los commits históricos no desaparecen al cambiar los archivos. Esta documentación se refiere exclusivamente al árbol convertido; no recomienda utilizar versiones históricas.
